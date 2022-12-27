@@ -281,12 +281,16 @@ char *http_post_lastpass_v_noexit(const char *server, const char *page, const st
 		postdata = xrealloc(postdata, len + new_len + 1 /* null */);
 		snprintf(postdata + len, new_len + 1, "%s%c", encoded_param, separator);
 		len += new_len;
+		puts("Encoded param");
+		puts(encoded_param);
 		curl_free(encoded_param);
 	}
 	if (len && postdata)
 		postdata[len - 1] = '\0';
 
 	memset(&result, 0, sizeof(result));
+	puts("Configured URL");
+	puts(url);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, LASTPASS_CLI_USERAGENT);
 
@@ -328,6 +332,12 @@ char *http_post_lastpass_v_noexit(const char *server, const char *page, const st
 	unset_interrupt_detect();
 
 	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, http_code);
+	// TODO: URL and debug info
+	char *effectiveUrl;
+	curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &effectiveUrl);
+	puts("Effective URL");
+	puts(effectiveUrl);
+	// done
 	curl_easy_cleanup(curl);
 	*curl_ret = ret;
 
@@ -350,11 +360,14 @@ char *http_post_lastpass_v(const char *server, const char *page, const struct se
 	int ret;
 	long http_code;
 
+	puts("Page:");
+	puts(page);
 	result = http_post_lastpass_v_noexit(server, page, session, final_len,
-					     argv, &ret, &http_code);
+																			 argv, &ret, &http_code);
 
-	if (ret != CURLE_OK && ret != CURLE_ABORTED_BY_CALLBACK)
-		die("%s.", curl_easy_strerror(ret));
+	if (ret != CURLE_OK && ret != CURLE_ABORTED_BY_CALLBACK) {
+		die("%s. HTTP STATUS %ld", curl_easy_strerror(ret), http_code);
+	}
 
 	return result;
 }
