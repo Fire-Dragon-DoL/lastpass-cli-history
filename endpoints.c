@@ -77,8 +77,15 @@ struct blob *lastpass_get_blob(const struct session *session, const unsigned cha
 char *lastpass_get_password_history_json(const struct session *session, struct account *account, const unsigned char key[KDF_HASH_LEN])
 {
     size_t len = 33 + strlen(account->id);
+		if (account->share) {
+			len = len + strlen("?sharedFolderId=") + strlen(account->share->id);
+		}
+
     _cleanup_free_ char *page = calloc(len, 1);
     sprintf(page, "lmiapi/accounts/%s/history/password", account->id);
+		if (account->share) {
+    	sprintf(page, "lmiapi/accounts/%s/history/password?sharedFolderId=%s", account->id, account->share->id);
+		}
 
     char *json = http_get_lastpass(page, session, &len);
 
