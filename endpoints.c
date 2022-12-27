@@ -84,21 +84,24 @@ char *lastpass_get_password_history_json(const struct session *session, struct a
 
     _cleanup_free_ char *page = calloc(len, 1);
     sprintf(page, "lmiapi/accounts/%s/history/password", account->id);
-
-    // char *json = http_get_lastpass(page, session, &len);
-    struct http_param_set params = {
-            .argv = NULL,
-            .n_alloced = 0
-    };
-
 		if (account->share) {
-			http_post_add_params(&params,
-							"sharedFolderId", account->share->id,
-							NULL);
+    	sprintf(page, "lmiapi/accounts/%s/history/password?sharedFolderId=%s", account->id, account->share->id);
 		}
 
-    // char *json = http_post_lastpass_param_set(page, session, final_len, &params);
-    char *json = http_post_lastpass_param_set(page, session, &len, &params);
+    char *json = http_get_lastpass(page, session, &len);
+    // struct http_param_set params = {
+    //         .argv = NULL,
+    //         .n_alloced = 0
+    // };
+
+		// if (account->share) {
+		// 	http_post_add_params(&params,
+		// 					"sharedFolderId", account->share->id,
+		// 					NULL);
+		// }
+
+    // // char *json = http_post_lastpass_param_set(page, session, final_len, &params);
+    // char *json = http_post_lastpass_param_set(page, session, &len, &params);
 
     if (!json || !len)
         return NULL;
