@@ -72,6 +72,7 @@ static void print_field(char *field_format, struct account *account,
 
 int cmd_history(int argc, char **argv) {
     unsigned char key[KDF_HASH_LEN];
+    unsigned char *sharekey = NULL;
     struct session *session = NULL;
     struct blob *blob = NULL;
     json_t pool[JSON_POOL_SIZE];
@@ -141,6 +142,9 @@ int cmd_history(int argc, char **argv) {
     if (!found_account)
         die("Could not find specified account(s).");
 
+    if (found_account->share)
+        sharekey = found_account->share->key;
+
     char *result = lastpass_get_password_history_json(session, found_account, key);
 
     if (clip)
@@ -165,7 +169,11 @@ int cmd_history(int argc, char **argv) {
             char const *date = json_getPropertyValue(entry, "date");
             char const *password = json_getPropertyValue(entry, "value");
             char const *whom = json_getPropertyValue(entry, "value");
+
             char *decyphered = cipher_aes_decrypt_base64(password, key);
+            if (!decyphered && sharekey) {
+                decyphered = cipher_aes_decrypt_base64(password, sharekey);
+            }
 
             char *date_copy = calloc(strlen(date) + 1, 1);
             strcpy(date_copy, date);
